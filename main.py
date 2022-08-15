@@ -1,4 +1,6 @@
 # move at four edges of screen before going back to center
+# undetailed countdown
+from random import randint
 from sys import platform
 from sys import exit
 from tkinter import Canvas, Text, Toplevel
@@ -26,13 +28,16 @@ class Eyes:
       s.left_pupil=s.c.create_oval(s.x/4-pupils,s.y/2-pupils,s.x/4+pupils,s.y/2+pupils,outline='black',fill='black')
       s.right_pupil=s.c.create_oval(3*s.x/4-pupils,s.y/2-pupils,3*s.x/4+pupils,s.y/2+pupils,outline='black',fill='black')
 
-      s.left_eyelid=s.c.create_arc(0+marge,0+marge,s.x/2-marge,s.y-marge,outline='black',fill='grey',width=4,start=0,extent=180)
-      s.right_eyelid=s.c.create_arc(s.x/2+marge,0+marge,s.x-marge,s.y-marge,outline='black',fill='grey',width=4,start=0,extent=180)
+      s.left_superior_eyelid=s.c.create_arc(0+marge,0+marge,s.x/2-marge,s.y-marge,outline='black',fill='grey',width=4,start=0,extent=180)
+      s.right_superior_eyelid=s.c.create_arc(s.x/2+marge,0+marge,s.x-marge,s.y-marge,outline='black',fill='grey',width=4,start=0,extent=180)
 
-      s.c.after(2000,lambda e=None:s.c.coords(s.left_eyelid,[0+marge,0+marge,s.x/2-marge,s.y-marge-30]))
+      s.left_inferior_eyelid=s.c.create_arc(0+marge,0+marge,s.x/2-marge,s.y-marge,outline='black',fill='grey',width=4,start=0,extent=-180)
+      s.right_inferior_eyelid=s.c.create_arc(s.x/2+marge,0+marge,s.x-marge,s.y-marge,outline='black',fill='grey',width=4,start=0,extent=-180)
+
+      s.c.after(2000,lambda e=None:s.c.coords(s.left_superior_eyelid,[0+marge,0+marge,s.x/2-marge,s.y-marge-30]))
 class Glimpse:
    def __init__(s,geometry:str,own:bool=False):
-      s.app=None
+      s.talkingspeed=(10,300)
       s.tk=Tk()
       s.tk.title('Glimpse')
       s.tk.geometry(geometry)
@@ -63,13 +68,18 @@ class Glimpse:
       s.tk.after(1,s.tk.focus_force)
    def wakeup(s):
       s.eyes=Eyes(s.tk,s.geom[:2],10,img=s.tkbgi)
-      s.tk.after(3000,s.notepad)
-   def talk(s):
-      # app.UntitledNotepad.
-      s.np.UntitledNotepad.Edit.type_keys("pywinauto Works!",with_spaces=True)
+      s.tk.after(2000,s.notepad)
+   def sayloop(s,string:str):
+      s.npT.insert('end-1c',string[0])
+      if len(string)!=1:s.npT.after(randint(*s.talkingspeed),lambda e=None:s.sayloop(string[1:]))
+   def say(s,string:str,speedrange:tuple=None):
+      s.npT.delete('1.0','end-1c')
+      if speedrange:s.talkingspeed=speedrange
+      s.sayloop(string)
    def loop(s):s.tk.mainloop()
 d=Glimpse('150x100+50+50')
 d.wakeup()
 # d.bind('<Button-1>',lambda x:d.geometry(f'+{x.x*10}+{x.y*10}'))
 # move(d,1,3,1)
+d.tk.after(3000,lambda e=None:d.say('BORING!!!'))
 d.loop()
