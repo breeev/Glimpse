@@ -122,7 +122,7 @@ class Glimpse:
       s.eyes=Eyes(s.tk,s.geom[:2],10,img=s.tkbgi)
       s.tk.wait_variable(s.eyes.ready)
 
-      for i in [((1,-1),(4,0)),((1,1),(0,4)),((-1,1),(-4,0)),((-1,-1),(0,-4))]:
+      for i in [((1,-1),(7,0)),((1,1),(0,10)),((-1,1),(-11,0)),((-1,-1),(0,-5))]:
          s.wait(700)
          s.eyes.move(*i[0])
          s.move(*i[1],1)
