@@ -1,8 +1,8 @@
 # move at four edges of screen before going back to center
 from sys import platform
 from sys import exit
+from tkinter import Canvas, Text, Toplevel
 if platform!='win32':exit()
-from os import system
 from getuser import lookup_username
 # print(getuser.lookup_username())
 try:from tkinter import Label,Tk
@@ -12,34 +12,64 @@ from subprocess import getoutput
 try:exec('dic={'+getoutput('curl ipinfo.io').split('{')[1])
 except:dic={i:None for i in 'ip,hostname,city,region,country,loc,org,postal,timezone,readme'.split(',')}
 print(dic)
-from pywinauto.application import Application
-def SetBG():
-   global g
-   g=ImageTk.PhotoImage(bgi)
-   bg.config(i=g)
-def Glimpse(geometry:str,own:bool=False):
-   global bg,bgi
-   tk=Tk()
-   tk.title('Glimpse')
-   tk.geometry(geometry)
-   tk.config(background='black')
-   if own:tk.overrideredirect(True)
-   tk.wm_attributes('-topmost','true')
-   tk.focus_force()
-   bgi=Image.open('pixels.png').resize((1900,1900),resample=Image.Resampling.BOX)
-   bg=Label(tk)
-   SetBG()
-   bg.place(x=-5,y=-5)
-   return tk
-def move(w:Tk,dx,dy,speed,x:int=0,y:int=0):
-   w.geometry(f'+{x}+{y}')
-   w.after(speed,lambda:move(w,dx,dy,speed,x+dx,y+dy))
-def live():
-   app=Application().start("notepad.exe")
-   app.UntitledNotepad.Edit.type_keys("pywinauto Works!",with_spaces=True)
-d=Glimpse('100x100+50+50')
-d.bind('<Control-q>',lambda x:d.destroy())
+class Eyes:
+   def __init__(s,master:Tk,size:tuple,marge:int=0,pos:tuple=(-2,-2),img=None,**kargs):
+      s.x,s.y=size[0],size[1]
+      s.c=Canvas(master,width=s.x+2,height=s.y+2,**kargs)
+      s.c.place(x=pos[0],y=pos[1])
+      s.size=size
+      if img:s.c.create_image(0,0,image=img)
+      s.left_sclera=s.c.create_oval(0+marge,0+marge,s.x/2-marge,s.y-marge,outline='black',fill='white',width=2)
+      s.right_sclera=s.c.create_oval(s.x/2+marge,0+marge,s.x-marge,s.y-marge,outline='black',fill='white',width=2)
+
+      pupils=10
+      s.left_pupil=s.c.create_oval(s.x/4-pupils,s.y/2-pupils,s.x/4+pupils,s.y/2+pupils,outline='black',fill='black')
+      s.right_pupil=s.c.create_oval(3*s.x/4-pupils,s.y/2-pupils,3*s.x/4+pupils,s.y/2+pupils,outline='black',fill='black')
+
+      s.left_eyelid=s.c.create_arc(0+marge,0+marge,s.x/2-marge,s.y-marge,outline='black',fill='grey',width=4,start=0,extent=180)
+      s.right_eyelid=s.c.create_arc(s.x/2+marge,0+marge,s.x-marge,s.y-marge,outline='black',fill='grey',width=4,start=0,extent=180)
+
+      s.c.after(2000,lambda e=None:s.c.coords(s.left_eyelid,[0+marge,0+marge,s.x/2-marge,s.y-marge-30]))
+class Glimpse:
+   def __init__(s,geometry:str,own:bool=False):
+      s.app=None
+      s.tk=Tk()
+      s.tk.title('Glimpse')
+      s.tk.geometry(geometry)
+      s.geom=geometry.split('x')
+      s.geom+=s.geom.pop(-1).split('+')
+      s.geom=[int(i) for i in s.geom]
+      s.tk.config(background='black')
+      if own:s.tk.overrideredirect(True)
+      s.tk.wm_attributes('-topmost','true')
+      s.tk.focus_force()
+      s.bgi=Image.open('pixels.png').resize((1900,1900),resample=Image.Resampling.BOX)
+      s.bg=Label(s.tk)
+      s.SetBG()
+      s.bg.place(x=-5,y=-5)
+      s.tk.bind('<Control-q>',lambda x=None:s.tk.destroy())
+   def SetBG(s):
+      s.tkbgi=ImageTk.PhotoImage(s.bgi)
+      s.bg.config(i=s.tkbgi)
+   def move(s,dx,dy,speed,x:int=0,y:int=0):
+      s.tk.geometry(f'+{x}+{y}')
+      s.tk.after(speed,lambda:s.move(dx,dy,speed,x+dx,y+dy))
+   def notepad(s):
+      s.np=Toplevel(s.tk)
+      s.np.title('notepad.exe - Untitled')
+      s.np.geometry(f'500x500+{s.geom[0]+2*s.geom[2]}+{s.geom[3]}')
+      s.npT=Text(s.np)
+      s.npT.pack(fill='both',expand=1)
+      s.tk.after(1,s.tk.focus_force)
+   def wakeup(s):
+      s.eyes=Eyes(s.tk,s.geom[:2],10,img=s.tkbgi)
+      s.tk.after(3000,s.notepad)
+   def talk(s):
+      # app.UntitledNotepad.
+      s.np.UntitledNotepad.Edit.type_keys("pywinauto Works!",with_spaces=True)
+   def loop(s):s.tk.mainloop()
+d=Glimpse('150x100+50+50')
+d.wakeup()
 # d.bind('<Button-1>',lambda x:d.geometry(f'+{x.x*10}+{x.y*10}'))
 # move(d,1,3,1)
-d.after(3000,live)
-d.mainloop()
+d.loop()
