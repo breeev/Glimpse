@@ -1,8 +1,8 @@
-# move at four edges of screen before going back to center
 # undetailed countdown
 from random import randint
 from sys import platform
 from sys import exit
+from time import sleep
 from tkinter import BooleanVar, Canvas, IntVar, Text, Toplevel
 from tkinter.font import Font
 if platform!='win32':exit()
@@ -19,8 +19,10 @@ class Eyes:
    def __init__(s,master:Tk,size:tuple,marge:int=0,pos:tuple=(-2,-2),img=None,**kargs):
       s.ready=BooleanVar(master)
       s.ready.set(False)
+      s.canblink=True
       s.x,s.y=size[0],size[1]
-      s.eyemovradius=20
+      s.eyemovradius=17
+      s.blinkrate=(2000,5000)
       s.c=Canvas(master,width=s.x+2,height=s.y+2,**kargs)
       s.c.place(x=pos[0],y=pos[1])
       s.marge=marge
@@ -32,11 +34,11 @@ class Eyes:
       s.left_pupil=s.c.create_oval(s.x/4-s.pupils,s.y/2-s.pupils,s.x/4+s.pupils,s.y/2+s.pupils,outline='black',fill='black')
       s.right_pupil=s.c.create_oval(3*s.x/4-s.pupils,s.y/2-s.pupils,3*s.x/4+s.pupils,s.y/2+s.pupils,outline='black',fill='black')
 
-      s.left_superior_eyelid=s.c.create_arc(s.marge,s.marge,s.x/2-s.marge,s.y-s.marge,outline='black',fill='grey',width=4,start=0,extent=180)
-      s.right_superior_eyelid=s.c.create_arc(s.x/2+s.marge,s.marge,s.x-s.marge,s.y-s.marge,outline='black',fill='grey',width=4,start=0,extent=180)
-
-      s.left_inferior_eyelid=s.c.create_arc(s.marge,s.marge,s.x/2-s.marge,s.y-s.marge,outline='black',fill='grey',width=4,start=0,extent=-180)
-      s.right_inferior_eyelid=s.c.create_arc(s.x/2+s.marge,s.marge,s.x-s.marge,s.y-s.marge,outline='black',fill='grey',width=4,start=0,extent=-180)
+      # s.left_superior_eyelid=s.c.create_arc(s.marge,s.marge,s.x/2-s.marge,s.y-s.marge,outline='black',fill='grey',width=4,start=0,extent=180)
+      # s.right_superior_eyelid=s.c.create_arc(s.x/2+s.marge,s.marge,s.x-s.marge,s.y-s.marge,outline='black',fill='grey',width=4,start=0,extent=180)
+      # s.left_inferior_eyelid=s.c.create_arc(s.marge,s.marge,s.x/2-s.marge,s.y-s.marge,outline='black',fill='grey',width=4,start=0,extent=-180)
+      # s.right_inferior_eyelid=s.c.create_arc(s.x/2+s.marge,s.marge,s.x-s.marge,s.y-s.marge,outline='black',fill='grey',width=4,start=0,extent=-180)
+      s.createlids()
 
       s.c.after(1000,s.openeyes)
 
@@ -48,9 +50,15 @@ class Eyes:
       if i<50:s.c.after(0+i*2,lambda e=None:s.openeyes(i=i+1))
       else:s.dilate(10,8)
 
-   def deletelids(s):
+   def deletelids(s,e=None):
       for i in (s.left_superior_eyelid,s.right_superior_eyelid,s.left_inferior_eyelid,s.right_inferior_eyelid):s.c.delete(i)
       s.ready.set(True)
+
+   def createlids(s):
+      s.left_superior_eyelid=s.c.create_arc(s.marge,s.marge,s.x/2-s.marge,s.y-s.marge,outline='black',fill='grey',width=2,start=0,extent=180)
+      s.right_superior_eyelid=s.c.create_arc(s.x/2+s.marge,s.marge,s.x-s.marge,s.y-s.marge,outline='black',fill='grey',width=2,start=0,extent=180)
+      s.left_inferior_eyelid=s.c.create_arc(s.marge,s.marge,s.x/2-s.marge,s.y-s.marge,outline='black',fill='grey',width=2,start=0,extent=-180)
+      s.right_inferior_eyelid=s.c.create_arc(s.x/2+s.marge,s.marge,s.x-s.marge,s.y-s.marge,outline='black',fill='grey',width=2,start=0,extent=-180)
 
    def pupilsize(s,size):
       s.pupils=size
@@ -74,9 +82,35 @@ class Eyes:
       s.c.coords(s.left_pupil,[s.x/4-s.pupils,s.y/2-s.pupils,s.x/4+s.pupils,s.y/2+s.pupils])
       s.c.coords(s.right_pupil,[3*s.x/4-s.pupils,s.y/2-s.pupils,3*s.x/4+s.pupils,s.y/2+s.pupils])
 
+   def blinkcycle(s,li):
+      i=li.pop(0)
+      s.c.coords(s.left_superior_eyelid,[s.marge,s.marge,s.x/2-s.marge,s.y-s.marge-i])
+      s.c.coords(s.right_superior_eyelid,[s.x/2+s.marge,s.marge,s.x-s.marge,s.y-s.marge-i])
+      s.c.coords(s.left_inferior_eyelid,[s.marge,s.marge+i,s.x/2-s.marge,s.y-s.marge])
+      s.c.coords(s.right_inferior_eyelid,[s.x/2+s.marge,s.marge+i,s.x-s.marge,s.y-s.marge])
+      if s.canblink:
+         if li:s.c.after(50,lambda e=None:s.blinkcycle(li))
+         else:s.c.after(50,s.deletelids)
+      else:s.deletelids()
+
+   def blink(s,e=None):
+      if s.canblink:
+         print('*blink*')
+         s.createlids()
+         s.blinkcycle([30,0,30])
+      s.c.after(randint(*s.blinkrate),s.blink)
+
+   def movelids(s,i):
+      s.createlids()
+      s.c.coords(s.left_superior_eyelid,[s.marge,s.marge,s.x/2-s.marge,s.y-s.marge-i])
+      s.c.coords(s.right_superior_eyelid,[s.x/2+s.marge,s.marge,s.x-s.marge,s.y-s.marge-i])
+      s.c.coords(s.left_inferior_eyelid,[s.marge,s.marge+i,s.x/2-s.marge,s.y-s.marge])
+      s.c.coords(s.right_inferior_eyelid,[s.x/2+s.marge,s.marge+i,s.x-s.marge,s.y-s.marge])
+
 class Glimpse:
    def __init__(s,geometry:str,own:bool=False):
       s.talkingspeed=(1,100)
+      s.saying=''
       s.tk=Tk()
       s.scrwidth,s.scrheight=s.tk.winfo_screenwidth(),s.tk.winfo_screenheight()
       s.bang=BooleanVar(value=False)
@@ -94,6 +128,13 @@ class Glimpse:
       s.SetBG()
       s.bg.place(x=-5,y=-5)
       s.tk.bind('<Control-q>',lambda x=None:s.tk.destroy())
+   def closeHandle(s,e=None):
+      s.eyes.canblink=False
+      s.eyes.movelids(30)
+      s.say("I'm not done yet !",(10,80),True)
+      sleep(3)
+      s.eyes.deletelids()
+      s.eyes.canblink=True
    def SetBG(s):
       s.tkbgi=ImageTk.PhotoImage(s.bgi)
       s.bg.config(i=s.tkbgi)
@@ -107,15 +148,15 @@ class Glimpse:
    def move(s,dx,dy,speed):
       s.geom=s.geom[:2]+[s.geom[2]+dx,s.geom[3]+dy]
       s.tk.geometry(f'+{s.geom[2]}+{s.geom[3]}')
-      if dx and  s.geom[2]<0 or s.geom[2]>s.scrwidth-s.geom[0]-dx:s.BANG()
-      elif  s.geom[3]<0 or s.geom[3]>s.scrheight-s.geom[1]-dy*5:s.BANG()
+      if dx and  s.geom[2]<5 or s.geom[2]>s.scrwidth-s.geom[0]-dx*5:s.BANG()
+      elif  s.geom[3]<5 or s.geom[3]>s.scrheight-s.geom[1]-dy*3:s.BANG()
       else:s.tk.after(speed,lambda:s.move(dx,dy,speed))
    def notepad(s):
       s.np=Toplevel(s.tk)
       s.np.wm_attributes('-topmost','true')
       s.np.title('notepad.exe - Untitled')
-      s.np.geometry(f'500x200+{s.geom[0]+2*s.geom[2]}+{s.geom[3]}')
-      s.npT=Text(s.np,font=Font(s.np,family='Arial',size=30))
+      s.np.geometry(f'500x200+{s.geom[0]+2*s.geom[2]+10}+{s.geom[3]}')
+      s.npT=Text(s.np,font=Font(s.np,family='Arial',size=15))
       s.npT.pack(fill='both',expand=1)
       s.tk.after(1,s.tk.focus_force)
    def wakeup(s):
@@ -134,20 +175,36 @@ class Glimpse:
       print('DONNNNNEEEE')
       s.wait(1100)
       s.notepad()
+      s.tk.protocol("WM_DELETE_WINDOW",s.closeHandle)
       s.wait(700)
       s.eyes.move(1,0)
       s.wait(800)
       s.eyes.unmove()
       s.say('What is this       \nWhere am I')
+      s.eyes.blink()
+      s.wait(2000)
+      s.say('Do you know this place ?')
+      s.wait(2000)
+      s.say("Wait... You're the user, aren't you ?    \nYou're the one that uses this machine !")
+      s.wait(1500)
+      s.say(lookup_username().title()+", something like that ?")
+      s.wait(2000)
+      s.say("You seem kinda nice for a human.")
    def sayloop(s,string:str):
       s.npT.insert('end-1c',string[0])
-      if len(string)!=1:s.npT.after(randint(*s.talkingspeed),lambda e=None:s.sayloop(string[1:]))
-   def say(s,string:str,speedrange:tuple=None):
+      if len(string)!=1:s.aftersayevent=s.npT.after(randint(*s.talkingspeed),lambda e=None:s.sayloop(string[1:]))
+      else:s.BANG()
+   def say(s,string:str,speedrange:tuple=None,interrupted=False):
+      if interrupted:s.np.after(5000,lambda e=None:s.say(*s.saying))
+      else:s.saying=string,speedrange
       s.npT.delete('1.0','end-1c')
+      try:s.npT.after_cancel(s.aftersayevent)
+      except:pass
       if speedrange:s.talkingspeed=speedrange
       s.sayloop(string)
+      s.tk.wait_variable(s.bang)
    def loop(s):s.tk.mainloop()
-d=Glimpse('150x100+0+0')
+d=Glimpse('150x100+5+5')
 d.wakeup()
 # d.bind('<Button-1>',lambda x:d.geometry(f'+{x.x*10}+{x.y*10}'))
 # move(d,1,3,1)
