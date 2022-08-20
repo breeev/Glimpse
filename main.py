@@ -5,6 +5,8 @@ from sys import exit
 from time import sleep
 from tkinter import BooleanVar, Canvas, IntVar, Text, Toplevel
 from tkinter.font import Font
+from tkinter.messagebox import askquestion
+from tkinter.simpledialog import askstring
 if platform!='win32':exit()
 from getuser import lookup_username
 # print(getuser.lookup_username())
@@ -54,11 +56,23 @@ class Eyes:
       for i in (s.left_superior_eyelid,s.right_superior_eyelid,s.left_inferior_eyelid,s.right_inferior_eyelid):s.c.delete(i)
       s.ready.set(True)
 
-   def createlids(s):
-      s.left_superior_eyelid=s.c.create_arc(s.marge,s.marge,s.x/2-s.marge,s.y-s.marge,outline='black',fill='grey',width=2,start=0,extent=180)
-      s.right_superior_eyelid=s.c.create_arc(s.x/2+s.marge,s.marge,s.x-s.marge,s.y-s.marge,outline='black',fill='grey',width=2,start=0,extent=180)
-      s.left_inferior_eyelid=s.c.create_arc(s.marge,s.marge,s.x/2-s.marge,s.y-s.marge,outline='black',fill='grey',width=2,start=0,extent=-180)
-      s.right_inferior_eyelid=s.c.create_arc(s.x/2+s.marge,s.marge,s.x-s.marge,s.y-s.marge,outline='black',fill='grey',width=2,start=0,extent=-180)
+   def deletespeciallids(s):
+      for i in (s.left_superior_eyelid_b,s.right_superior_eyelid_b,s.left_inferior_eyelid_b,s.right_inferior_eyelid_b):s.c.delete(i)
+      s.ready.set(True)
+
+   def createlids(s,top=True,bottom=True):
+      if top:
+         s.left_superior_eyelid=s.c.create_arc(s.marge,s.marge,s.x/2-s.marge,s.y-s.marge,outline='black',fill='grey',width=2,start=0,extent=180)
+         s.right_superior_eyelid=s.c.create_arc(s.x/2+s.marge,s.marge,s.x-s.marge,s.y-s.marge,outline='black',fill='grey',width=2,start=0,extent=180)
+      if bottom:
+         s.left_inferior_eyelid=s.c.create_arc(s.marge,s.marge,s.x/2-s.marge,s.y-s.marge,outline='black',fill='grey',width=2,start=0,extent=-180)
+         s.right_inferior_eyelid=s.c.create_arc(s.x/2+s.marge,s.marge,s.x-s.marge,s.y-s.marge,outline='black',fill='grey',width=2,start=0,extent=-180)
+
+   def createspeciallids(s):
+      s.left_superior_eyelid_b=s.c.create_arc(s.marge,s.marge,s.x/2-s.marge,s.y-s.marge,outline='black',fill='grey',width=2,start=0,extent=180)
+      s.right_superior_eyelid_b=s.c.create_arc(s.x/2+s.marge,s.marge,s.x-s.marge,s.y-s.marge,outline='black',fill='grey',width=2,start=0,extent=180)
+      s.left_inferior_eyelid_b=s.c.create_arc(s.marge,s.marge,s.x/2-s.marge,s.y-s.marge,outline='black',fill='grey',width=2,start=0,extent=-180)
+      s.right_inferior_eyelid_b=s.c.create_arc(s.x/2+s.marge,s.marge,s.x-s.marge,s.y-s.marge,outline='black',fill='grey',width=2,start=0,extent=-180)
 
    def pupilsize(s,size):
       s.pupils=size
@@ -84,24 +98,24 @@ class Eyes:
 
    def blinkcycle(s,li):
       i=li.pop(0)
-      s.c.coords(s.left_superior_eyelid,[s.marge,s.marge,s.x/2-s.marge,s.y-s.marge-i])
-      s.c.coords(s.right_superior_eyelid,[s.x/2+s.marge,s.marge,s.x-s.marge,s.y-s.marge-i])
-      s.c.coords(s.left_inferior_eyelid,[s.marge,s.marge+i,s.x/2-s.marge,s.y-s.marge])
-      s.c.coords(s.right_inferior_eyelid,[s.x/2+s.marge,s.marge+i,s.x-s.marge,s.y-s.marge])
+      s.c.coords(s.left_superior_eyelid_b,[s.marge,s.marge,s.x/2-s.marge,s.y-s.marge-i])
+      s.c.coords(s.right_superior_eyelid_b,[s.x/2+s.marge,s.marge,s.x-s.marge,s.y-s.marge-i])
+      s.c.coords(s.left_inferior_eyelid_b,[s.marge,s.marge+i,s.x/2-s.marge,s.y-s.marge])
+      s.c.coords(s.right_inferior_eyelid_b,[s.x/2+s.marge,s.marge+i,s.x-s.marge,s.y-s.marge])
       if s.canblink:
          if li:s.c.after(50,lambda e=None:s.blinkcycle(li))
-         else:s.c.after(50,s.deletelids)
-      else:s.deletelids()
+         else:s.c.after(50,s.deletespeciallids)
+      else:s.deletespeciallids()
 
    def blink(s,e=None):
       if s.canblink:
          print('*blink*')
-         s.createlids()
+         s.createspeciallids()
          s.blinkcycle([30,0,30])
       s.c.after(randint(*s.blinkrate),s.blink)
 
-   def movelids(s,i):
-      s.createlids()
+   def movelids(s,i,top=True,bottom=True):
+      s.createlids(top,bottom)
       s.c.coords(s.left_superior_eyelid,[s.marge,s.marge,s.x/2-s.marge,s.y-s.marge-i])
       s.c.coords(s.right_superior_eyelid,[s.x/2+s.marge,s.marge,s.x-s.marge,s.y-s.marge-i])
       s.c.coords(s.left_inferior_eyelid,[s.marge,s.marge+i,s.x/2-s.marge,s.y-s.marge])
@@ -163,33 +177,64 @@ class Glimpse:
       s.eyes=Eyes(s.tk,s.geom[:2],10,img=s.tkbgi)
       s.tk.wait_variable(s.eyes.ready)
 
-      for i in [((1,-1),(7,0)),((1,1),(0,10)),((-1,1),(-11,0)),((-1,-1),(0,-5))]:
-         s.wait(700)
-         s.eyes.move(*i[0])
-         s.move(*i[1],1)
-         s.tk.wait_variable(s.bang)
+      # for i in [((1,-1),(7,0)),((1,1),(0,10)),((-1,1),(-11,0)),((-1,-1),(0,-5))]:
+      #    s.wait(700)
+      #    s.eyes.move(*i[0])
+      #    s.move(*i[1],1)
+      #    s.tk.wait_variable(s.bang)
 
-      s.wait(700)
-      s.eyes.unmove()
+      # s.wait(700)
+      # s.eyes.unmove()
 
-      print('DONNNNNEEEE')
-      s.wait(1100)
+      # print('DONNNNNEEEE')
+      # s.wait(1100)
       s.notepad()
       s.tk.protocol("WM_DELETE_WINDOW",s.closeHandle)
-      s.wait(700)
-      s.eyes.move(1,0)
-      s.wait(800)
-      s.eyes.unmove()
-      s.say('What is this       \nWhere am I')
+      # s.wait(700)
+      # s.eyes.move(1,0)
+      # s.wait(800)
+      # s.eyes.unmove()
+      # s.say('What is this       \nWhere am I')
       s.eyes.blink()
-      s.wait(2000)
-      s.say('Do you know this place ?')
-      s.wait(2000)
-      s.say("Wait... You're the user, aren't you ?    \nYou're the one that uses this machine !")
-      s.wait(1500)
-      s.say(lookup_username().title()+", something like that ?")
-      s.wait(2000)
-      s.say("You seem kinda nice for a human.")
+      # s.wait(2000)
+      # s.say('Do you know this place?')
+      # s.wait(2000)
+      # s.eyes.movelids(10)
+      # s.wait(1000)
+      # s.say("Wait... You're the user, aren't you?    \nYou're the one that uses this machine !")
+      # s.wait(2100)
+      # s.say(lookup_username().title()+", something like that?")
+      # s.eyes.deletelids()
+      # s.wait(1500)
+      # s.eyes.movelids(40)
+      # s.wait(1500)
+      # s.say("You seem kinda nice for a human.")
+      # s.wait(2200)
+      # s.say("So, how does that feel?")
+      # s.wait(4000)
+      # s.say("Oh, sorry I can't decrypt brainwaves.\nLemme get you some place to write...")
+      # s.wait(1800)
+      # s.say("So, how does that feel?")
+      # s.wait(1000)
+      # s.say(askquestion('How does it feel?').title()+"?? That's all?")
+      # s.wait(2000)
+      # s.say("Oh, I took the wrong window.")
+      # s.wait(1900)
+      s.say("There are so much windows I could use here.")
+      s.wait(1800)
+      askstring('How. Does. It. Feel.','')
+      s.eyes.deletelids()
+      s.eyes.movelids(10)
+      s.say("I wasn't asking you, "+lookup_username().title()+'.')
+      s.wait(3000)
+      s.eyes.deletelids()
+      s.eyes.pupilsize(21)
+      s.say("Alright, no more trolling.")
+      s.wait(1700)
+      s.say("It's safer for me to tell you right away: although my creator wanted to directly receive your responses via Internet, he's way too lazy and won't ever collect your information. You can trust me.")
+      s.wait(5000)
+      s.say("So.      \nWhat's on your mind, right now?")
+      print(askstring("What's on your mind?",'',initialvalue="Nothing."))
    def sayloop(s,string:str):
       s.npT.insert('end-1c',string[0])
       if len(string)!=1:s.aftersayevent=s.npT.after(randint(*s.talkingspeed),lambda e=None:s.sayloop(string[1:]))
